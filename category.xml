@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+   <feature url="features/org.eclipse.jdt.extensions_1.0.0.jar" id="org.eclipse.jdt.extensions" version="1.0.0" patch="true">
+      <category name="org.eclipse.jdt.extensions"/>
+   </feature>
+   <category-def name="org.eclipse.jdt.extensions" label="Uncategorized"/>
+</site>
