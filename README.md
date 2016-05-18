@@ -14,15 +14,20 @@ Allows to use C#-style type inference using the `var` keyword (for local variabl
 Implementation extracted from Project Lombok but integrated directly into the JDT.
 
 ```java
-var list = new LinkedList<String()>();
+public class Test {	
 
-list.add("hello");
-list.add(" world!");
-
-for (var s: list) {
-	System.out.print(s);
+	public static void test() {
+		var list = new LinkedList<String()>();
+		
+		list.add("hello");
+		list.add(" world!");
+		
+		for (var s: list) {
+			System.out.print(s);
+		}
+		System.out.println();
+	}
 }
-System.out.println();
 ```
 
 ### Default argument values
@@ -34,19 +39,19 @@ Any valid expression valid in the context of the overloaded method can be used, 
 (provided they do not have a default value).
 
 ```java
-class Test {	
+public class Test {	
 
-	static void sayHello(String who = "world") {
+	public static void sayHello(String who = "world") {
 		System.out.println("Hello " + who + "!");
 	}
 	
 	// The following method will be automatically generated
-	static void sayHello() {
+	public static void sayHello() {
 		sayHello("world");
 	}
 	
-	static void main(String[] args) {
-		sayHello();
+	public static void main(String[] args) {
+		sayHello(); // -> Hello world!
 	}
 }
 ```
@@ -60,34 +65,34 @@ Inspired by C#, mostly intended for diagnostics:
 Useful for logging or assertion methods. Corresponds to the `Conditional` C# attribute.
 
 ```java
-class Test {
+public class Test {
 	
 	@CallIf(false)
-	static void disabled(Object arg) {
+	public static void disabled(Object arg) {
 	}
 	
 	@CallIf(true)
-	static void enabled(Object arg) {
+	public static void enabled(Object arg) {
 	}
 	
-	static void main(String[] args) {
+	public static void main(String[] args) {
 		var hello = "Hello";
 		disabled(hello = hello + " world!");
-		System.out.println(hello); // Hello
+		System.out.println(hello); // -> Hello
 		enabled(hello = hello + " world!");
-		System.out.println(hello); // Hello world!
+		System.out.println(hello); // -> Hello world!
 	}
 }
 ```
 
 * `@CallFile`, `@CallLine`, `@CallClass`, `@CallMethod`: on a method parameter, replaced by the corresponding value in the caller's context.
 
-Corresponds to the `Caller...` C# attributes.
+Corresponds to the `Caller...` attributes in C#.
 
 ```java
-class Test {
+public class Test {
 	
-	static void print(@CallFile String callFile, @CallLine int callLine, @CallClass String callClass, @CallMethod String callMethod, String message, Object ...args) {
+	public static void print(@CallFile String callFile, @CallLine int callLine, @CallClass String callClass, @CallMethod String callMethod, String message, Object ...args) {
 		var output = new StringBuilder();
 		var callFileName = new File(callFile).getName();
 		output.append("(").append(callFileName).append(":").append(callLine).append("): ").append(callClass).append(".").append(callMethod).append(": ");
@@ -95,25 +100,27 @@ class Test {
 		System.out.println(output);
 	}
 	
-	static void main(String[] args) {
+	public static void main(String[] args) {
 		var world = "world";
-		print("Hello %s!", world); // (Test.java:64): Test.main: Hello world!
+		print("Hello %s!", world); // -> (Test.java:64): Test.main: Hello world!
 	}
 }
 ```
 
 * `@CallArg`, `@CallArgs`: on a method parameter, filled with the string representation of the value used for the following argument (@`CallArg`) or all non-synthetic arguments (`@CallArgs`).
 
-Corresponds to the `nameof` C# operator.
+Note: if the caller expression is an invocation, the compiler will try to find a symbolic name in the arguments of the invocation (recursively).
+
+Corresponds to the `nameof` operator in C#.
 
 ```java
-class Test {
+public class Test {
 
-	static String display(@CallArg String objName, Object objValue) {
+	public static String display(@CallArg String objName, Object objValue) {
 		return objName + " = " + objValue;
 	}
 	
-	static String displayAll(@CallArgs String[] objNames, Object ...objValues) {
+	public static String displayAll(@CallArgs String[] objNames, Object ...objValues) {
 		StringBuilder builder = new StringBuilder();
 		for (int i = 0; i < objValues.length; i++) {
 			if (i > 0) builder.append(", ");
@@ -122,11 +129,12 @@ class Test {
 		return builder.toString();
 	}
 	
-	static void main(String[] args) {
+	public static void main(String[] args) {
+		var number = 42;
+		System.out.println(display(new String(String.format("0x%X", number))); // -> number = 0x2A
 		var hello = "Hello";  
-		System.out.println(display(hello)); // hello = Hello
 		var world = "world";
-		System.out.println(displayAll(hello, world, hello + " " + world + "!")); // hello = Hello, world = world, hello + " " + world + "!" = Hello world!
+		System.out.println(displayAll(hello, world, hello + " " + world + "!")); // -> hello = Hello, world = world, hello + " " + world + "!" = Hello world!
 	}
 }
 ```
@@ -143,8 +151,7 @@ This sets the default access protection to public instead of Package-Private for
 org.eclipse.jdt.core.compiler.extensions.publicByDefault=enabled
 ```
 
-Not for everyone obviously but nice when you just want to write code for a personal/prototype project and worry about
-encapsulation later (or never).
+Not for everyone obviously but often on personal project you just want to write code and worry about encapsulation later.
 
 ```java
 class Hello {
