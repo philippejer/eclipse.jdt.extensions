@@ -23,9 +23,8 @@ public class Test {
 		list.add(" world!");
 		
 		for (var s: list) {
-			System.out.print(s);
+			// do something with it
 		}
-		System.out.println();
 	}
 }
 ```
@@ -48,9 +47,9 @@ public class Test {
 }
 ```
 
-### Conditional method annotation
+### Conditional method annotations
 
-* `@Conditional`: on a method, allows to disable all calls to a specific method. Note: parameters will not be evaluated.
+* `@Conditional`, `@ConditionalCallerField`: on a method, allows to condition calls to a specific method depending on a global constant and/or a constant on the caller type. Note: parameters will __not__ be evaluated.
 
 Useful for logging or assertion methods. Corresponds to the `[Conditional]` attribute in C#.
 
@@ -65,12 +64,21 @@ public class Test {
 	public static void enabled(Object arg) {
 	}
 	
+	public static final boolean EnableMe = true;
+	
+	@Conditional(false)
+	@ConditionalCallerField("EnableMe")
+	public static void enabledFromTest(Object arg) {
+	}
+	
 	public static void main(String[] args) {
 		var hello = "Hello";
 		disabled(hello = hello + " world!");
 		System.out.println(hello); // -> Hello
 		enabled(hello = hello + " world!");
 		System.out.println(hello); // -> Hello world!
+		enabledFromTest(hello = hello + " (again)");
+		System.out.println(hello); // -> Hello world! (again)
 	}
 }
 ```
