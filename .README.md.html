@@ -641,129 +641,122 @@ function setDocumentScrollTop(ypos)
 <body class="markdown-body">
 <h1> <a id="jdt-extensions" class="anchor" href="#jdt-extensions" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>JDT Extensions</h1> 
 <p>This is a patch for Eclipse JDT to add support a few Java extensions, inspired by <a href="https://projectlombok.org">Project Lombok</a>.</p> 
+<p>Important: source files using any of these features can only be compiled by a patched Eclipse IDE.</p> 
 <h2> <a id="list-of-extensions" class="anchor" href="#list-of-extensions" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>List of extensions</h2> 
 <h3> <a id="var-keyword" class="anchor" href="#var-keyword" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><code>var</code> keyword</h3> 
 <p>Allows to use C#-style type inference using the <code>var</code> keyword (for local variables and collection iterators).</p> 
 <p>Implementation extracted from Project Lombok but integrated directly into the JDT.</p> 
 <div class="highlight highlight-source-java">
- <pre>var list <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-k">LinkedList&lt;<span class="pl-smi">String</span>(</span>)<span class="pl-k">&gt;</span>();
+ <pre><span class="pl-k">public</span> <span class="pl-k">class</span> <span class="pl-en">Test</span> { 
 
-list<span class="pl-k">.</span>add(<span class="pl-s"><span class="pl-pds">&quot;</span>hello<span class="pl-pds">&quot;</span></span>);
-list<span class="pl-k">.</span>add(<span class="pl-s"><span class="pl-pds">&quot;</span> world!<span class="pl-pds">&quot;</span></span>);
+    <span class="pl-k">public</span> <span class="pl-k">static</span> <span class="pl-k">void</span> <span class="pl-en">test</span>() {
+        var list <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-k">LinkedList&lt;<span class="pl-smi">String</span>(</span>)<span class="pl-k">&gt;</span>();
 
-<span class="pl-k">for</span> (var s<span class="pl-k">:</span> list) {
-    <span class="pl-smi">System</span><span class="pl-k">.</span>out<span class="pl-k">.</span>print(s);
-}
-<span class="pl-smi">System</span><span class="pl-k">.</span>out<span class="pl-k">.</span>println();</pre>
+        list<span class="pl-k">.</span>add(<span class="pl-s"><span class="pl-pds">&quot;</span>hello<span class="pl-pds">&quot;</span></span>);
+        list<span class="pl-k">.</span>add(<span class="pl-s"><span class="pl-pds">&quot;</span> world!<span class="pl-pds">&quot;</span></span>);
+
+        <span class="pl-k">for</span> (var s<span class="pl-k">:</span> list) {
+            <span class="pl-c">// do something with it</span>
+        }
+    }
+}</pre>
 </div> 
-<h3> <a id="struct-keyword" class="anchor" href="#struct-keyword" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><code>struct</code> keyword</h3> 
-<p>Same as <code>class</code>, except the default access protection is public instead of package-protected for all direct children (and for the class itself).</p> 
-<p>Not for everyone obviously but nice when you just want to write code for a personal/prototype project and worry about encapsulation later (or never).</p> 
+<h3> <a id="optional-parameter-annotation" class="anchor" href="#optional-parameter-annotation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Optional parameter annotation</h3> 
+<p><code>@Optional</code>: the parameter can be omitted in which case the value received will be the neutral type value (i.e. <code>null</code>, <code>0</code> or <code>false</code>).</p> 
 <div class="highlight highlight-source-java">
- <pre>struct <span class="pl-smi">Hello</span> {
+ <pre><span class="pl-k">public</span> <span class="pl-k">class</span> <span class="pl-en">Test</span> { 
 
-    <span class="pl-k">static</span> <span class="pl-k">void</span> main(<span class="pl-k">String</span>[] args) { <span class="pl-c">// would not run as a normal class since not public</span>
+    <span class="pl-k">public</span> <span class="pl-k">static</span> <span class="pl-k">void</span> <span class="pl-en">sayHello</span>(<span class="pl-k">@Optional</span> <span class="pl-smi">String</span> <span class="pl-v">who</span>) {
+        <span class="pl-k">if</span> (who <span class="pl-k">==</span> <span class="pl-c1">null</span>) who <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">&quot;</span>world<span class="pl-pds">&quot;</span></span>;
+        <span class="pl-smi">System</span><span class="pl-k">.</span>out<span class="pl-k">.</span>println(<span class="pl-s"><span class="pl-pds">&quot;</span>Hello <span class="pl-pds">&quot;</span></span> <span class="pl-k">+</span> who <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">&quot;</span>!<span class="pl-pds">&quot;</span></span>);
+    }
+
+    <span class="pl-k">public</span> <span class="pl-k">static</span> <span class="pl-k">void</span> <span class="pl-en">main</span>(<span class="pl-k">String</span>[] <span class="pl-v">args</span>) {
+        sayHello(); <span class="pl-c">// -&gt; Hello world!</span>
+    }
+}</pre>
+</div> 
+<h3> <a id="conditional-method-annotations" class="anchor" href="#conditional-method-annotations" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Conditional method annotations</h3> 
+<ul> 
+ <li> <code>@Conditional</code>, <code>@ConditionalCallerField</code>: on a method, allows to condition calls to a specific method depending on a global constant and/or a constant on the caller type. Note: parameters will <strong>not</strong> be evaluated.</li> 
+</ul> 
+<p>Useful for logging or assertion methods. Corresponds to the <code>[Conditional]</code> attribute in C#.</p> 
+<div class="highlight highlight-source-java">
+ <pre><span class="pl-k">public</span> <span class="pl-k">class</span> <span class="pl-en">Test</span> {
+
+    <span class="pl-k">@Conditional</span>(<span class="pl-c1">false</span>)
+    <span class="pl-k">public</span> <span class="pl-k">static</span> <span class="pl-k">void</span> <span class="pl-en">disabled</span>(<span class="pl-smi">Object</span> <span class="pl-v">arg</span>) {
+    }
+
+    <span class="pl-k">@Conditional</span>(<span class="pl-c1">true</span>)
+    <span class="pl-k">public</span> <span class="pl-k">static</span> <span class="pl-k">void</span> <span class="pl-en">enabled</span>(<span class="pl-smi">Object</span> <span class="pl-v">arg</span>) {
+    }
+
+    <span class="pl-k">public</span> <span class="pl-k">static</span> <span class="pl-k">final</span> <span class="pl-k">boolean</span> EnableMe <span class="pl-k">=</span> <span class="pl-c1">true</span>;
+
+    <span class="pl-k">@Conditional</span>(<span class="pl-c1">false</span>)
+    <span class="pl-k">@ConditionalCallerField</span>(<span class="pl-s"><span class="pl-pds">&quot;</span>EnableMe<span class="pl-pds">&quot;</span></span>)
+    <span class="pl-k">public</span> <span class="pl-k">static</span> <span class="pl-k">void</span> <span class="pl-en">enabledFromTest</span>(<span class="pl-smi">Object</span> <span class="pl-v">arg</span>) {
+    }
+
+    <span class="pl-k">public</span> <span class="pl-k">static</span> <span class="pl-k">void</span> <span class="pl-en">main</span>(<span class="pl-k">String</span>[] <span class="pl-v">args</span>) {
+        var hello <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">&quot;</span>Hello<span class="pl-pds">&quot;</span></span>;
+        disabled(hello <span class="pl-k">=</span> hello <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">&quot;</span> world!<span class="pl-pds">&quot;</span></span>);
+        <span class="pl-smi">System</span><span class="pl-k">.</span>out<span class="pl-k">.</span>println(hello); <span class="pl-c">// -&gt; Hello</span>
+        enabled(hello <span class="pl-k">=</span> hello <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">&quot;</span> world!<span class="pl-pds">&quot;</span></span>);
+        <span class="pl-smi">System</span><span class="pl-k">.</span>out<span class="pl-k">.</span>println(hello); <span class="pl-c">// -&gt; Hello world!</span>
+        enabledFromTest(hello <span class="pl-k">=</span> hello <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">&quot;</span> (again)<span class="pl-pds">&quot;</span></span>);
+        <span class="pl-smi">System</span><span class="pl-k">.</span>out<span class="pl-k">.</span>println(hello); <span class="pl-c">// -&gt; Hello world! (again)</span>
+    }
+}</pre>
+</div> 
+<h3> <a id="synthetic-parameters-annotations" class="anchor" href="#synthetic-parameters-annotations" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Synthetic parameters annotations</h3> 
+<p>Extremely useful for logging stuff:</p> 
+<ul> 
+ <li> <code>@CallerFile</code>, <code>@CallerLine</code>, <code>@CallerClass</code>, <code>@CallerMethod</code>: on a method parameter, replaced by the corresponding value in the caller's context.</li> 
+</ul> 
+<p>(similar to the C# attributes <code>[CallerFilePath]</code>, <code>[CallerMemberName]</code>, ...).</p> 
+<ul> 
+ <li> <code>@ArgName</code>, <code>@ArgNames</code>: on a method parameter, replaced with the caller-side representation for the next (non-synthetic) argument(s).</li> 
+</ul> 
+<p>Note: if the caller expression is a method/constructor call, the compiler will try to find a symbolic name in the arguments of the invocation (recursively).</p> 
+<p>(similar to the <code>nameof</code> operator in C#).</p> 
+<div class="highlight highlight-source-java">
+ <pre><span class="pl-k">public</span> <span class="pl-k">class</span> <span class="pl-en">Test</span> {
+
+    <span class="pl-k">public</span> <span class="pl-k">static</span> <span class="pl-k">void</span> <span class="pl-en">log</span>(<span class="pl-k">@CallerFile</span> <span class="pl-smi">String</span> <span class="pl-v">file</span>, <span class="pl-k">@CallerLine</span> <span class="pl-k">int</span> <span class="pl-v">line</span>, <span class="pl-k">@CallerMethod</span> <span class="pl-smi">String</span> <span class="pl-v">method</span>, <span class="pl-smi">String</span> <span class="pl-v">message</span>, <span class="pl-k">@ArgNames</span> <span class="pl-k">String</span>[] <span class="pl-v">names</span>, <span class="pl-smi">Object</span> ...<span class="pl-v">args</span>) {
+        var output <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-smi">StringBuilder</span>();
+        output<span class="pl-k">.</span>append(<span class="pl-s"><span class="pl-pds">&quot;</span>(<span class="pl-pds">&quot;</span></span>)<span class="pl-k">.</span>append(<span class="pl-k">new</span> <span class="pl-smi">File</span>(file)<span class="pl-k">.</span>getName())<span class="pl-k">.</span>append(<span class="pl-s"><span class="pl-pds">&quot;</span>:<span class="pl-pds">&quot;</span></span>)<span class="pl-k">.</span>append(line)<span class="pl-k">.</span>append(<span class="pl-s"><span class="pl-pds">&quot;</span>): <span class="pl-pds">&quot;</span></span>)<span class="pl-k">.</span>append(method)<span class="pl-k">.</span>append(<span class="pl-s"><span class="pl-pds">&quot;</span>: <span class="pl-pds">&quot;</span></span>)<span class="pl-k">.</span>append(message)<span class="pl-k">.</span>append(<span class="pl-s"><span class="pl-pds">&quot;</span>: <span class="pl-pds">&quot;</span></span>);
+        <span class="pl-k">for</span> (<span class="pl-k">int</span> i <span class="pl-k">=</span> <span class="pl-c1">0</span>; i <span class="pl-k">&lt;</span> args<span class="pl-k">.</span>length; i<span class="pl-k">++</span>) {
+            <span class="pl-k">if</span> (i <span class="pl-k">&gt;</span> <span class="pl-c1">0</span>) output<span class="pl-k">.</span>append(<span class="pl-s"><span class="pl-pds">'</span> <span class="pl-pds">'</span></span>);
+            output<span class="pl-k">.</span>append(names[i])<span class="pl-k">.</span>append(<span class="pl-s"><span class="pl-pds">'</span>=<span class="pl-pds">'</span></span>)<span class="pl-k">.</span>append(args[i]);
+        }
+        <span class="pl-smi">System</span><span class="pl-k">.</span>out<span class="pl-k">.</span>println(output);
+    }
+
+    <span class="pl-k">public</span> <span class="pl-k">static</span> <span class="pl-k">void</span> <span class="pl-en">main</span>(<span class="pl-k">String</span>[] <span class="pl-v">args</span>) {
+        var v1 <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">&quot;</span>hello<span class="pl-pds">&quot;</span></span>;
+        var v2 <span class="pl-k">=</span> <span class="pl-c1">42</span>;
+        log(<span class="pl-s"><span class="pl-pds">&quot;</span>here you are<span class="pl-pds">&quot;</span></span>, v1, <span class="pl-smi">String</span><span class="pl-k">.</span>format(<span class="pl-s"><span class="pl-pds">&quot;</span>0x%X<span class="pl-pds">&quot;</span></span>, v2)); <span class="pl-c">// -&gt; (Test.java:129): main: here you are: v1=hello v2=0x2A</span>
+    }
+}</pre>
+</div> 
+<p>Note: these are &quot;synthetic&quot; parameters, in the sense that these parameters are invisible to the caller (the completion system has been modified to hide these parameters).</p> 
+<p>The big advantage of this approach (instead of using optional parameters) is that these parameters can appear before regular parameters which means this can be combined with varargs (very useful for logging). This is a big advantage over the C# equivalents with use optional parameters.</p> 
+<p>Limitation: it does not interact well with generic methods (not really an issue in practice).</p> 
+<h3> <a id="public-by-default" class="anchor" href="#public-by-default" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Public by default</h3> 
+<p>This sets the default access protection to public instead of Package-Private for a project. To enable, simply add to following to <code>${Workspace}/${Project}/.settings/org.eclipse.jdt.core.prefs</code>:</p> 
+<pre><code>org.eclipse.jdt.core.compiler.extensions.publicByDefault=enabled
+</code></pre> 
+<p>Not for everyone obviously but often on personal project you just want to write code and worry about encapsulation later.</p> 
+<div class="highlight highlight-source-java">
+ <pre><span class="pl-k">class</span> <span class="pl-en">Hello</span> {
+
+    <span class="pl-k">static</span> <span class="pl-k">void</span> <span class="pl-en">main</span>(<span class="pl-k">String</span>[] <span class="pl-v">args</span>) { <span class="pl-c">// would not run normally since not public</span>
         <span class="pl-smi">System</span><span class="pl-k">.</span>out<span class="pl-k">.</span>println(<span class="pl-s"><span class="pl-pds">&quot;</span>Hello!<span class="pl-pds">&quot;</span></span>);
     }
 }</pre>
 </div> 
-<h3> <a id="default-argument-values" class="anchor" href="#default-argument-values" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Default argument values</h3> 
-<p>Same as C++ or C# default argument values, allows to specify default values for method parameters.</p> 
-<p>Note: this will automatically generate appropriate method overload(s), just like this would be done in &quot;plain&quot; Java. Any valid expression valid in the context of the overloaded method can be used, including referencing other arguments (provided they do not have a default value).</p> 
-<div class="highlight highlight-source-java">
- <pre>struct <span class="pl-smi">Test</span> {   
-
-    <span class="pl-k">static</span> <span class="pl-k">void</span> sayHello(<span class="pl-smi">String</span> who <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">&quot;</span>world<span class="pl-pds">&quot;</span></span>) {
-        <span class="pl-smi">System</span><span class="pl-k">.</span>out<span class="pl-k">.</span>println(<span class="pl-s"><span class="pl-pds">&quot;</span>Hello <span class="pl-pds">&quot;</span></span> <span class="pl-k">+</span> who <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">&quot;</span>!<span class="pl-pds">&quot;</span></span>);
-    }
-
-    <span class="pl-c">// The following method will be automatically generated</span>
-    <span class="pl-k">static</span> <span class="pl-k">void</span> sayHello() {
-        sayHello(<span class="pl-s"><span class="pl-pds">&quot;</span>world<span class="pl-pds">&quot;</span></span>);
-    }
-
-    <span class="pl-k">static</span> <span class="pl-k">void</span> main(<span class="pl-k">String</span>[] args) {
-        sayHello();
-    }
-}</pre>
-</div> 
-<h3> <a id="caller-annotations" class="anchor" href="#caller-annotations" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Caller annotations</h3> 
-<p>Inspired by C#, mostly intended for diagnostics:</p> 
-<ul> 
- <li> <code>@CallIf</code>: on a method, allows to disable all calls to a specific method (including parameter evaluation!).</li> 
-</ul> 
-<p>Useful for logging or assertion methods. Corresponds to the <code>Conditional</code> C# attribute.</p> 
-<div class="highlight highlight-source-java">
- <pre>struct <span class="pl-smi">Test</span> {
-
-    @CallIf(<span class="pl-c1">false</span>)
-    <span class="pl-k">static</span> <span class="pl-k">void</span> disabled(<span class="pl-smi">Object</span> arg) {
-    }
-
-    @CallIf(<span class="pl-c1">true</span>)
-    <span class="pl-k">static</span> <span class="pl-k">void</span> enabled(<span class="pl-smi">Object</span> arg) {
-    }
-
-    <span class="pl-k">static</span> <span class="pl-k">void</span> main(<span class="pl-k">String</span>[] args) {
-        var hello <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">&quot;</span>Hello<span class="pl-pds">&quot;</span></span>;
-        disabled(hello <span class="pl-k">=</span> hello <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">&quot;</span> world!<span class="pl-pds">&quot;</span></span>);
-        <span class="pl-smi">System</span><span class="pl-k">.</span>out<span class="pl-k">.</span>println(hello); <span class="pl-c">// Hello</span>
-        enabled(hello <span class="pl-k">=</span> hello <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">&quot;</span> world!<span class="pl-pds">&quot;</span></span>);
-        <span class="pl-smi">System</span><span class="pl-k">.</span>out<span class="pl-k">.</span>println(hello); <span class="pl-c">// Hello world!</span>
-    }
-}</pre>
-</div> 
-<ul> 
- <li> <code>@CallFile</code>, <code>@CallLine</code>, <code>@CallClass</code>, <code>@CallMethod</code>: on a method parameter, replaced by the corresponding value in the caller's context.</li> 
-</ul> 
-<p>Corresponds to the <code>Caller...</code> C# attributes.</p> 
-<div class="highlight highlight-source-java">
- <pre>struct <span class="pl-smi">Test</span> {
-
-    <span class="pl-k">static</span> <span class="pl-k">void</span> print(@<span class="pl-smi">CallFile</span> <span class="pl-smi">String</span> callFile, @<span class="pl-smi">CallLine</span> <span class="pl-k">int</span> callLine, @<span class="pl-smi">CallClass</span> <span class="pl-smi">String</span> callClass, @<span class="pl-smi">CallMethod</span> <span class="pl-smi">String</span> callMethod, <span class="pl-smi">String</span> message, <span class="pl-smi">Object</span> <span class="pl-c1">..</span><span class="pl-k">.</span>args) {
-        var output <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-smi">StringBuilder</span>();
-        var callFileName <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-smi">File</span>(callFile)<span class="pl-k">.</span>getName();
-        output<span class="pl-k">.</span>append(<span class="pl-s"><span class="pl-pds">&quot;</span>(<span class="pl-pds">&quot;</span></span>)<span class="pl-k">.</span>append(callFileName)<span class="pl-k">.</span>append(<span class="pl-s"><span class="pl-pds">&quot;</span>:<span class="pl-pds">&quot;</span></span>)<span class="pl-k">.</span>append(callLine)<span class="pl-k">.</span>append(<span class="pl-s"><span class="pl-pds">&quot;</span>): <span class="pl-pds">&quot;</span></span>)<span class="pl-k">.</span>append(callClass)<span class="pl-k">.</span>append(<span class="pl-s"><span class="pl-pds">&quot;</span>.<span class="pl-pds">&quot;</span></span>)<span class="pl-k">.</span>append(callMethod)<span class="pl-k">.</span>append(<span class="pl-s"><span class="pl-pds">&quot;</span>: <span class="pl-pds">&quot;</span></span>);
-        output<span class="pl-k">.</span>append(<span class="pl-smi">String</span><span class="pl-k">.</span>format(message, args));
-        <span class="pl-smi">System</span><span class="pl-k">.</span>out<span class="pl-k">.</span>println(output);
-    }
-
-    <span class="pl-k">static</span> <span class="pl-k">void</span> main(<span class="pl-k">String</span>[] args) {
-        var world <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">&quot;</span>world<span class="pl-pds">&quot;</span></span>;
-        print(<span class="pl-s"><span class="pl-pds">&quot;</span>Hello %s!<span class="pl-pds">&quot;</span></span>, world); <span class="pl-c">// (Test.java:64): Test.main: Hello world!</span>
-    }
-}</pre>
-</div> 
-<ul> 
- <li> <code>@CallArg</code>, <code>@CallArgs</code>: on a method parameter, filled with the string representation of the value used for the following argument (@<code>CallArg</code>) or all non-synthetic arguments (<code>@CallArgs</code>).</li> 
-</ul> 
-<p>Corresponds to the <code>nameof</code> C# operator.</p> 
-<div class="highlight highlight-source-java">
- <pre>struct <span class="pl-smi">Test</span> {
-
-    <span class="pl-k">static</span> <span class="pl-smi">String</span> display(@<span class="pl-smi">CallArg</span> <span class="pl-smi">String</span> objName, <span class="pl-smi">Object</span> objValue) {
-        <span class="pl-k">return</span> objName <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">&quot;</span> = <span class="pl-pds">&quot;</span></span> <span class="pl-k">+</span> objValue;
-    }
-
-    <span class="pl-k">static</span> <span class="pl-smi">String</span> displayAll(@<span class="pl-smi">CallArgs</span> <span class="pl-k">String</span>[] objNames, <span class="pl-smi">Object</span> <span class="pl-c1">..</span><span class="pl-k">.</span>objValues) {
-        <span class="pl-smi">StringBuilder</span> builder <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-smi">StringBuilder</span>();
-        <span class="pl-k">for</span> (<span class="pl-k">int</span> i <span class="pl-k">=</span> <span class="pl-c1">0</span>; i <span class="pl-k">&lt;</span> objValues<span class="pl-k">.</span>length; i<span class="pl-k">++</span>) {
-            <span class="pl-k">if</span> (i <span class="pl-k">&gt;</span> <span class="pl-c1">0</span>) builder<span class="pl-k">.</span>append(<span class="pl-s"><span class="pl-pds">&quot;</span>, <span class="pl-pds">&quot;</span></span>);
-            builder<span class="pl-k">.</span>append(objNames[i])<span class="pl-k">.</span>append(<span class="pl-s"><span class="pl-pds">&quot;</span> = <span class="pl-pds">&quot;</span></span>)<span class="pl-k">.</span>append(objValues[i]);
-        }
-        <span class="pl-k">return</span> builder<span class="pl-k">.</span>toString();
-    }
-
-    <span class="pl-k">static</span> <span class="pl-k">void</span> main(<span class="pl-k">String</span>[] args) {
-        var hello <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">&quot;</span>Hello<span class="pl-pds">&quot;</span></span>;  
-        <span class="pl-smi">System</span><span class="pl-k">.</span>out<span class="pl-k">.</span>println(display(hello)); <span class="pl-c">// hello = Hello</span>
-        var world <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">&quot;</span>world<span class="pl-pds">&quot;</span></span>;
-        <span class="pl-smi">System</span><span class="pl-k">.</span>out<span class="pl-k">.</span>println(displayAll(hello, world, hello <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">&quot;</span> <span class="pl-pds">&quot;</span></span> <span class="pl-k">+</span> world <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">&quot;</span>!<span class="pl-pds">&quot;</span></span>)); <span class="pl-c">// hello = Hello, world = world, hello + &quot; &quot; + world + &quot;!&quot; = Hello world!</span>
-    }
-}</pre>
-</div> 
-<p>Note: these are &quot;synthetic&quot; annotations, in the sense that the arguments are always generated by the compiler (unlike optional arguments).</p> 
-<p>The main advantage of this approach is that these parameters do not need to appear last and so can combined with variable number of arguments (very useful for logging). This is unlike the corresponding C# annotations.</p> 
 <h2> <a id="installation" class="anchor" href="#installation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Installation</h2> 
 <p>To install the patch:</p> 
 <ol> 
