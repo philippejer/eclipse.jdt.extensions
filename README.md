@@ -30,24 +30,16 @@ public class Test {
 }
 ```
 
-### Default argument values
+### Optional parameter annotation
 
-Same as C++ or C# default argument values, allows to specify default values for method parameters.
-
-Note: this will automatically generate appropriate method overload(s), just like this would be done in "plain" Java.
-Any valid expression valid in the context of the overloaded method can be used, including referencing other arguments
-(provided they do not have a default value).
+`@Optional`: the parameter can be omitted in which case the value received will be the neutral type value (i.e. `null`, `0` or `false`).
 
 ```java
 public class Test {	
 
-	public static void sayHello(String who = "world") {
+	public static void sayHello(@Optional String who) {
+		if (who == null) who = "world";
 		System.out.println("Hello " + who + "!");
-	}
-	
-	// The following method will be automatically generated
-	public static void sayHello() {
-		sayHello("world");
 	}
 	
 	public static void main(String[] args) {
@@ -56,22 +48,20 @@ public class Test {
 }
 ```
 
-### Caller annotations
+### Conditional method annotation
 
-Inspired by C#, mostly intended for diagnostics:
+* `@Conditional`: on a method, allows to disable all calls to a specific method. Note: parameters will not be evaluated.
 
-* `@CallIf`: on a method, allows to disable all calls to a specific method (including parameter evaluation!).
-
-Useful for logging or assertion methods. Corresponds to the `Conditional` C# attribute.
+Useful for logging or assertion methods. Corresponds to the `[Conditional]` attribute in C#.
 
 ```java
 public class Test {
 	
-	@CallIf(false)
+	@Conditional(false)
 	public static void disabled(Object arg) {
 	}
 	
-	@CallIf(true)
+	@Conditional(true)
 	public static void enabled(Object arg) {
 	}
 	
@@ -85,11 +75,15 @@ public class Test {
 }
 ```
 
-* `@CallFile`, `@CallLine`, `@CallClass`, `@CallMethod`: on a method parameter, replaced by the corresponding value in the caller's context.
+### Synthetic parameters annotations
 
-(similar to the `Caller...` attributes in C#).
+Extremely useful for logging stuff:
 
-* `@CallName`, `@CallNames`: on a method parameter, replaced with the caller-side representation for the next (non-synthetic) argument(s).
+* `@CallerFile`, `@CallerLine`, `@CallerClass`, `@CallerMethod`: on a method parameter, replaced by the corresponding value in the caller's context.
+
+(similar to the C# attributes `[CallerFilePath]`, `[CallerMemberName]`, ...).
+
+* `@ArgName`, `@ArgNames`: on a method parameter, replaced with the caller-side representation for the next (non-synthetic) argument(s).
 
 Note: if the caller expression is a method/constructor call, the compiler will try to find a symbolic name in the arguments of the invocation (recursively).
 
@@ -98,7 +92,7 @@ Note: if the caller expression is a method/constructor call, the compiler will t
 ```java
 public class Test {
 
-	public static void log(@CallFile String file, @CallLine int line, @CallMethod String method, String message, @CallNames String[] names, Object ...args) {
+	public static void log(@CallerFile String file, @CallerLine int line, @CallerMethod String method, String message, @ArgNames String[] names, Object ...args) {
 		var output = new StringBuilder();
 		output.append("(").append(new File(file).getName()).append(":").append(line).append("): ").append(method).append(": ").append(message).append(": ");
 		for (int i = 0; i < args.length; i++) {
@@ -116,11 +110,11 @@ public class Test {
 }
 ```
 
-Note: these are "synthetic" annotations, in the sense that the arguments are invisible to the caller (the completion system has been modified to hide these parameters).
+Note: these are "synthetic" parameters, in the sense that these parameters are invisible to the caller (the completion system has been modified to hide these parameters).
 
-The big advantage of this approach (instead of using optional arguments) is that these parameters can appear before regular parameters and so this can be combined with variable number of arguments (very useful for logging). This is a big advantage over C# with uses optional arguments.
+The big advantage of this approach (instead of using optional parameters) is that these parameters can appear before regular parameters which means this can be combined with varargs (very useful for logging). This is a big advantage over the C# equivalents with use optional parameters.
 
-Limitation: it does not work on generic method (it could be fixed but that's not an issue in practice since this is mostly useful for logging stuff).
+Limitation: it does not interact well with generic methods (not really an issue in practice).
 
 ### Public by default
 
