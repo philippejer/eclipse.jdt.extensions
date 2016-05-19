@@ -149,6 +149,7 @@ To install the patch:
 
 1. Download the zip archive `eclipse.jdt.extensions.zip`.
 2. Use "Help" --> "Install New Software" --> "Add" --> "Archive".
+3. Add `plugins/org.eclipse.jdt.annotation_xxx.jar` from the Eclipse installation to the project (the one with the highest version and date)
 
 ## Implementation notes
 
